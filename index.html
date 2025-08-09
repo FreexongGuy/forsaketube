@@ -103,7 +103,6 @@
       color: #fff;
     }
 
-    /* fullscreen container styles */
     #fullscreen-player {
       display: none;
       position: fixed;
@@ -111,7 +110,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: black;
+      background: black;
       z-index: 9999;
       overflow: hidden;
     }
@@ -123,8 +122,7 @@
       display: block;
     }
 
-
-    /* Left vertical menu panel */
+    /* Side vertical panel */
     #side-panel {
       position: fixed;
       top: 0;
@@ -170,10 +168,10 @@
 
   <div id="video-gallery"></div>
 
-  <!-- Fullscreen container for playing video -->
+  <!-- Fullscreen player container -->
   <div id="fullscreen-player"></div>
 
-  <!-- Left vertical menu panel -->
+  <!-- Left-side control panel -->
   <div id="side-panel">
     <button onclick="exitFullscreen()">Get Out Of Fullscreen</button>
     <button onclick="sendCommandToVideo('mute')">Mute</button>
@@ -188,7 +186,6 @@
       { title: "Video 3", youtubeId: "JWzbOvbjXTM" }
     ];
 
-    // Local storage setup
     if (!localStorage.getItem("coinBalance")) {
       localStorage.setItem("coinBalance", "0");
     }
@@ -206,7 +203,6 @@
       if (!watched.includes(videoId)) {
         watched.push(videoId);
         localStorage.setItem("watchedVideos", JSON.stringify(watched));
-
         let coins = parseInt(localStorage.getItem("coinBalance"), 10);
         coins += 10;
         localStorage.setItem("coinBalance", coins.toString());
@@ -214,31 +210,30 @@
       }
     }
 
-  function openFullscreen(elem) {
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { /* Safari */
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { /* IE11 */
-      elem.msRequestFullscreen();
+    function openFullscreen(elem) {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
     }
-  }
 
-  function playVideoInFullscreen(videoId) {
-    const fsContainer = document.getElementById("fullscreen-player");
-    fsContainer.innerHTML = "";
+    function playVideoInFullscreen(videoId) {
+      const fsContainer = document.getElementById("fullscreen-player");
+      fsContainer.innerHTML = "";
 
-    const iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&controls=1&enablejsapi=1`;
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen";
-    iframe.allowFullscreen = true;
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&controls=1&enablejsapi=1&modestbranding=1`;
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+      iframe.allowFullscreen = true;
 
-    fsContainer.appendChild(iframe);
-    fsContainer.style.display = "block";
+      fsContainer.appendChild(iframe);
+      fsContainer.style.display = "block";
 
-    openFullscreen(fsContainer);
-  }
-
+      openFullscreen(fsContainer);
+    }
 
     function createGallery() {
       const gallery = document.getElementById("video-gallery");
@@ -267,7 +262,6 @@
       });
     }
 
-    // Controls for side panel buttons
     function exitFullscreen() {
       if (document.fullscreenElement) {
         document.exitFullscreen();
@@ -295,7 +289,7 @@
       exitFullscreen();
     }
 
-    // Initialize
+    // Init
     updateCoinBalance();
     createGallery();
   </script>
