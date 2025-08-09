@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ForsakeTube</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      background: url("background.webp") no-repeat center center fixed;
+      background-size: cover;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      z-index: -2;
+      filter: blur(12px);
+      transform: scale(1.05);
+    }
+
+    body {
+      background-color: rgba(0, 0, 0, 0.6);
+      color: #f9f9f9;
+      padding: 30px 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      color: #fff;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    .coins-display {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffeb3b;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px 20px;
+      border-radius: 10px;
+      width: max-content;
+      margin: 0 auto 20px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .coins-display img {
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+    }
+
+    #video-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .video-container {
+      width: 320px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 15px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .video-container:hover {
+      transform: translateY(-5px);
+    }
+
+    .video-thumbnail {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .video-title {
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    /* fullscreen container styles */
+    #fullscreen-player {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: black;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    #fullscreen-player iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+
+    /* Left vertical menu panel */
+    #side-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 60px;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      z-index: 10000;
+    }
+
+    #side-panel button {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      margin: 10px 0;
+      padding: 6px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid #ccc;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.3s;
+      user-select: none;
+    }
+
+    #side-panel button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="coins-display">
+    <img src="coin.png" alt="Coin icon">
+    <span id="coin-balance">0</span>
+  </div>
+
+  <h1>ForsakeTube</h1>
+
+  <div id="video-gallery"></div>
+
+  <!-- Fullscreen container for playing video -->
+  <div id="fullscreen-player"></div>
+
+  <!-- Left vertical menu panel -->
+  <div id="side-panel">
+    <button onclick="exitFullscreen()">Get Out Of Fullscreen</button>
+    <button onclick="sendCommandToVideo('mute')">Mute</button>
+    <button onclick="sendCommandToVideo('unMute')">Unmute</button>
+    <button onclick="closeVideo()">Exit</button>
+  </div>
+
+  <script>
+    const videos = [
+      { title: "Video 1", youtubeId: "S66HaywR31k" },
+      { title: "Video 2", youtubeId: "0L_V4Xzn3TE" },
+      { title: "Video 3", youtubeId: "S66HaywR31k" }
+    ];
+
+    // Local storage setup
+    if (!localStorage.getItem("coinBalance")) {
+      localStorage.setItem("coinBalance", "0");
+    }
+
+    if (!localStorage.getItem("watchedVideos")) {
+      localStorage.setItem("watchedVideos", JSON.stringify([]));
+    }
+
+    function updateCoinBalance() {
+      document.getElementById("coin-balance").textContent = localStorage.getItem("coinBalance");
+    }
+
+    function markWatched(videoId) {
+      const watched = JSON.parse(localStorage.getItem("watchedVideos"));
+      if (!watched.includes(videoId)) {
+        watched.push(videoId);
+        localStorage.setItem("watchedVideos", JSON.stringify(watched));
+
+        let coins = parseInt(localStorage.getItem("coinBalance"), 10);
+        coins += 10;
+        localStorage.setItem("coinBalance", coins.toString());
+        updateCoinBalance();
+      }
+    }
+
+  function openFullscreen(elem) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) { /* Safari */
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { /* IE11 */
+      elem.msRequestFullscreen();
+    }
+  }
+
+  function playVideoInFullscreen(videoId) {
+    const fsContainer = document.getElementById("fullscreen-player");
+    fsContainer.innerHTML = "";
+
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&controls=1&enablejsapi=1`;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+    iframe.allowFullscreen = true;
+
+    fsContainer.appendChild(iframe);
+    fsContainer.style.display = "block";
+
+    openFullscreen(fsContainer);
+  }
+
+
+    function createGallery() {
+      const gallery = document.getElementById("video-gallery");
+
+      videos.forEach(video => {
+        const container = document.createElement("div");
+        container.className = "video-container";
+
+        const thumbnail = document.createElement("img");
+        thumbnail.className = "video-thumbnail";
+        thumbnail.src = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
+        thumbnail.alt = video.title;
+
+        const title = document.createElement("div");
+        title.className = "video-title";
+        title.textContent = video.title;
+
+        container.appendChild(thumbnail);
+        container.appendChild(title);
+        gallery.appendChild(container);
+
+        container.addEventListener("click", () => {
+          markWatched(video.youtubeId);
+          playVideoInFullscreen(video.youtubeId);
+        });
+      });
+    }
+
+    // Controls for side panel buttons
+    function exitFullscreen() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+    }
+
+    function sendCommandToVideo(command) {
+      const iframe = document.querySelector('#fullscreen-player iframe');
+      if (!iframe) return;
+
+      iframe.contentWindow.postMessage(
+        JSON.stringify({
+          event: "command",
+          func: command,
+          args: [],
+        }),
+        "*"
+      );
+    }
+
+    function closeVideo() {
+      const fsPlayer = document.getElementById('fullscreen-player');
+      fsPlayer.innerHTML = "";
+      fsPlayer.style.display = "none";
+      exitFullscreen();
+    }
+
+    // Initialize
+    updateCoinBalance();
+    createGallery();
+  </script>
+</body>
+</html>
